@@ -1,70 +1,116 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 import Celda from "./components/Celda";
 
 function App() {
-  const [mapaValores, setMapaValores] = useState(Array(64).fill(" "));
-  const [copiaMapaValores, setCopiaMapaValores] = useState(Array(64).fill(" "));
+  const [mapaValores, setMapaValores] = useState(
+    Array(8).fill().map(() => Array(8).fill(" "))
+  );
+  const [copiaMapaValores, setCopiaMapaValores] = useState(
+    Array(8).fill().map(() => Array(8).fill(" "))
+  );
   const [juegoEmpezado, setJuegoEmpezado] = useState(false);
   const [numeroMinasTexto, setNumeroMinasTexto] = useState(10);
+  const [tiempo, setTiempo] = useState(0);
+  const [juegoReiniciado, setJuegoReiniciado] = useState(false);
 
-  const celdas = mapaValores.map((item, index) => (
-    <div className="col-auto p-0" key={index}>
-      <Celda valor={item} onCeldaClick={() => mostrarValor(index)} numeroMinasTexto={numeroMinasTexto} setNumeroMinasTexto={setNumeroMinasTexto} juegoEmpezado={juegoEmpezado}></Celda>
-    </div>
-  ));
+  useEffect(() => {
+    let vTiempo;
+    if (juegoEmpezado) {
+      vTiempo = setInterval(() => setTiempo((tiempoAnterior) => tiempoAnterior + 1), 1000);
+    }
+    return () => {
+      clearInterval(vTiempo);
+    };
+  }, [juegoEmpezado]);
+
+  const celdas = mapaValores.map((fila, filaIndex) =>
+    fila.map((item, colIndex) => (
+      <div className="col-auto p-0" key={`${filaIndex}-${colIndex}`}>
+        <Celda
+          valor={item}
+          onCeldaClick={() => mostrarValor(filaIndex, colIndex)}
+          numeroMinasTexto={numeroMinasTexto}
+          setNumeroMinasTexto={setNumeroMinasTexto}
+          juegoEmpezado={juegoEmpezado}
+          juegoReiniciado={juegoReiniciado}
+        ></Celda>
+      </div>
+    ))
+  );
 
   function btnComenzar() {
     setNumeroMinasTexto("10");
-    let mapa = Array(64).fill(" ");
+    setTiempo(0);
+    setJuegoEmpezado(true);
+
+    let mapa = Array(8)
+      .fill()
+      .map(() => Array(8).fill(" "));
 
     for (let i = 0; i < 10; i++) {
-      let randomPos;
+      let randomFila, randomColumna;
       do {
-        randomPos = Math.floor(Math.random() * 64);
-      } while (mapa[randomPos] === "*");
-      mapa[randomPos] = "*";
+        randomFila = Math.floor(Math.random() * 8);
+        randomColumna = Math.floor(Math.random() * 8);
+      } while (mapa[randomFila][randomColumna] === "*");
+      mapa[randomFila][randomColumna] = "*";
     }
 
-    for (let i = 0; i < 64; i++) {
-      if (mapa[i] !== "*") {
-        let numeroMinas = 0;
-        let fila = Math.floor(i / 8);
-        let columna = i % 8;
+    for (let fila = 0; fila < 8; fila++) {
+      for (let columna = 0; columna < 8; columna++) {
+        if (mapa[fila][columna] !== "*") {
+          let numeroMinas = 0;
 
-        let posiciones = [
-          { offset: -8, valido: fila > 0 }, // Arriba
-          { offset: +8, valido: fila < 7 }, // Abajo
-          { offset: -1, valido: columna > 0 }, // Izquierda
-          { offset: +1, valido: columna < 7 }, // Derecha
-          { offset: -9, valido: fila > 0 && columna > 0 }, // Esquina arriba izquierda
-          { offset: -7, valido: fila > 0 && columna < 7 }, // Esquina arriba derecha
-          { offset: +7, valido: fila < 7 && columna > 0 }, // Esquina abajo izquierda
-          { offset: +9, valido: fila < 7 && columna < 7 }, // Esquina abajo derecha
-        ];
+          const posiciones = [
+            { filaOffset: -1, colOffset: 0 }, // Arriba
+            { filaOffset: +1, colOffset: 0 }, // Abajo
+            { filaOffset: 0, colOffset: -1 }, // Izquierda
+            { filaOffset: 0, colOffset: +1 }, // Derecha
+            { filaOffset: -1, colOffset: -1 }, // Esquina arriba izquierda
+            { filaOffset: -1, colOffset: +1 }, // Esquina arriba derecha
+            { filaOffset: +1, colOffset: -1 }, // Esquina abajo izquierda
+            { filaOffset: +1, colOffset: +1 }, // Esquina abajo derecha
+          ];
 
-        for (let pos of posiciones) {
-          if (pos.valido && mapa[i + pos.offset] === "*") {
-            numeroMinas++;
+          for (let pos of posiciones) {
+            const nuevaFila = fila + pos.filaOffset;
+            const nuevaColumna = columna + pos.colOffset;
+            if (
+              nuevaFila >= 0 &&
+              nuevaFila < 8 &&
+              nuevaColumna >= 0 &&
+              nuevaColumna < 8 &&
+              mapa[nuevaFila][nuevaColumna] === "*"
+            ) {
+              numeroMinas++;
+            }
           }
-        }
 
-        if (numeroMinas > 0) {
-          mapa[i] = numeroMinas.toString();
-        } else {
-          mapa[i] = "-";
+          if (numeroMinas > 0) {
+            mapa[fila][columna] = numeroMinas.toString();
+          } else {
+            mapa[fila][columna] = "-";
+          }
+          
         }
       }
     }
 
-    setMapaValores(Array(64).fill(" "));
+    setMapaValores(Array(8).fill().map(() => Array(8).fill(" ")));
     setCopiaMapaValores(mapa);
-    setJuegoEmpezado(true);
+    setJuegoReiniciado(true);
+    setTimeout(() => setJuegoReiniciado(false), 100);
   }
 
-  const mostrarValor = (index) => {
-    const copiaValores = mapaValores.slice();
-    copiaValores[index] = copiaMapaValores[index];
+  const mostrarValor = (filaIndex, colIndex) => {
+    const copiaValores = mapaValores.map((fila, fIndex) =>
+      fIndex === filaIndex
+        ? fila.map((valor, cIndex) =>
+            cIndex === colIndex ? copiaMapaValores[filaIndex][colIndex] : valor
+          )
+        : fila
+    );
     setMapaValores(copiaValores);
   };
 
@@ -74,20 +120,24 @@ function App() {
         <div className="grid bg-body-secondary py-2 px-4 borderOutSide m-0">
           <div className="row bg-body-secondary borderInside ">
             <div className="d-flex flex-wrap justify-content-around">
-              <div id="numeroMinas" className="lcdText text-danger pe-2 m-2 borderInsideS">
+              <div
+                id="numeroMinas"
+                className="lcdText text-danger pe-2 m-2 borderInsideS"
+              >
                 {numeroMinasTexto}
               </div>
               <div className="align-self-center m-2 borderInsideS">
                 <img
                   src="./src/assets/images/acierto.png"
                   style={{ width: 50 }}
+                  alt="icon"
                 />
               </div>
               <div
                 className="lcdText text-danger pe-2 m-2 borderInsideS"
                 style={{ width: 54 }}
               >
-                00
+                {tiempo}
               </div>
             </div>
           </div>

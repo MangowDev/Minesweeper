@@ -6,6 +6,7 @@ function Celda({
   numeroMinasTexto,
   setNumeroMinasTexto,
   juegoEmpezado,
+  juegoReiniciado,
 }) {
   const [miValor, setMiValor] = useState(valor);
 
@@ -13,18 +14,25 @@ function Celda({
     setMiValor(valor);
   }, [valor]);
 
+  useEffect(() => {
+    if (juegoReiniciado) {
+      setMiValor(" "); 
+    }
+  }, [juegoReiniciado]);
+
   function onRightClick(e) {
     e.preventDefault();
-    if (juegoEmpezado === true) {
-      let nuevoNumero = parseInt(numeroMinasTexto);
-      if (nuevoNumero === 0) {
-      } else {
-        setMiValor("M");
-        let nuevoNumero = parseInt(numeroMinasTexto);
-        nuevoNumero--;
-        nuevoNumero = nuevoNumero.toString();
-        setNumeroMinasTexto(nuevoNumero);
-      }
+    if (!juegoEmpezado) return;
+
+    let nuevoNumero = parseInt(numeroMinasTexto);
+
+    if (miValor === "M") {
+      setMiValor(" ");
+      setNumeroMinasTexto((nuevoNumero + 1).toString());
+    } 
+    else if (miValor === " " && nuevoNumero > 0) {
+      setMiValor("M");
+      setNumeroMinasTexto((nuevoNumero - 1).toString());
     }
   }
 
@@ -39,5 +47,6 @@ function Celda({
     </button>
   );
 }
+
 
 export default Celda;
