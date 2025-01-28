@@ -5,68 +5,61 @@ import Celda from "./components/Celda";
 function App() {
   const [mapaValores, setMapaValores] = useState(Array(64).fill(" "));
   const [copiaMapaValores, setCopiaMapaValores] = useState(Array(64).fill(" "));
+  const [juegoEmpezado, setJuegoEmpezado] = useState(false);
+  const [numeroMinasTexto, setNumeroMinasTexto] = useState(10);
 
   const celdas = mapaValores.map((item, index) => (
     <div className="col-auto p-0" key={index}>
-      <Celda valor={item} onCeldaClick={() => mostrarValor(index)}></Celda>
+      <Celda valor={item} onCeldaClick={() => mostrarValor(index)} numeroMinasTexto={numeroMinasTexto} setNumeroMinasTexto={setNumeroMinasTexto} juegoEmpezado={juegoEmpezado}></Celda>
     </div>
   ));
 
   function btnComenzar() {
-    let mapa = [Array(64).fill(" ")];
-    for (let i = 1; i <= 10; i++) {
-      let randomPos = Math.floor(Math.random() * 64);
-      let casillaValor = "*";
-      mapa[randomPos] = casillaValor;
+    setNumeroMinasTexto("10");
+    let mapa = Array(64).fill(" ");
+
+    for (let i = 0; i < 10; i++) {
+      let randomPos;
+      do {
+        randomPos = Math.floor(Math.random() * 64);
+      } while (mapa[randomPos] === "*");
+      mapa[randomPos] = "*";
     }
 
-    /**
-     * casilla paralela vertical = numero casilla - 8 o + 8
-     * esquina izquierda arriba = numero casilla - 9 
-     * esquina derecha arriba = numero casilla - 7
-     * esquina izquierda abajo = numero casilla + 7
-     * esquina derecha abajo = numero casilla + 9
-     * casilla de los lados = numero casilla - 1 o + 1
-     */
-    
-    for (let i = 0; i < mapa.length; i++) {
-      let numeroMinas = 0;
-      
+    for (let i = 0; i < 64; i++) {
       if (mapa[i] !== "*") {
-        if (mapa[i + 1] === "*") {
-            numeroMinas++;
-        }
-        if (mapa[i - 1] === "*") {
-            numeroMinas++;
-        }
-        if (mapa[i - 8] === "*") {
-            numeroMinas++;
-        }
-        if (mapa[i + 8] === "*") {
-            numeroMinas++;
-        }
-        if (mapa[i - 9] === "*") {
-            numeroMinas++;
-        }
-        if (mapa[i + 9] === "*") {
-            numeroMinas++;
-        }
-        if (mapa[i + 7] === "*") {
-            numeroMinas++;
-        }
-        if (mapa[i - 7] === "*") {
-            numeroMinas++;
-        }
-        
-        let casillaNumero = numeroMinas.toString();
-        mapa[i] = casillaNumero;
-    }
-    
+        let numeroMinas = 0;
+        let fila = Math.floor(i / 8);
+        let columna = i % 8;
 
+        let posiciones = [
+          { offset: -8, valido: fila > 0 }, // Arriba
+          { offset: +8, valido: fila < 7 }, // Abajo
+          { offset: -1, valido: columna > 0 }, // Izquierda
+          { offset: +1, valido: columna < 7 }, // Derecha
+          { offset: -9, valido: fila > 0 && columna > 0 }, // Esquina arriba izquierda
+          { offset: -7, valido: fila > 0 && columna < 7 }, // Esquina arriba derecha
+          { offset: +7, valido: fila < 7 && columna > 0 }, // Esquina abajo izquierda
+          { offset: +9, valido: fila < 7 && columna < 7 }, // Esquina abajo derecha
+        ];
+
+        for (let pos of posiciones) {
+          if (pos.valido && mapa[i + pos.offset] === "*") {
+            numeroMinas++;
+          }
+        }
+
+        if (numeroMinas > 0) {
+          mapa[i] = numeroMinas.toString();
+        } else {
+          mapa[i] = "-";
+        }
+      }
     }
 
     setMapaValores(Array(64).fill(" "));
     setCopiaMapaValores(mapa);
+    setJuegoEmpezado(true);
   }
 
   const mostrarValor = (index) => {
@@ -81,8 +74,8 @@ function App() {
         <div className="grid bg-body-secondary py-2 px-4 borderOutSide m-0">
           <div className="row bg-body-secondary borderInside ">
             <div className="d-flex flex-wrap justify-content-around">
-              <div className="lcdText text-danger pe-2 m-2 borderInsideS">
-                10
+              <div id="numeroMinas" className="lcdText text-danger pe-2 m-2 borderInsideS">
+                {numeroMinasTexto}
               </div>
               <div className="align-self-center m-2 borderInsideS">
                 <img
