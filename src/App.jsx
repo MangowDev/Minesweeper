@@ -13,16 +13,21 @@ function App() {
   const [numeroMinasTexto, setNumeroMinasTexto] = useState(10);
   const [tiempo, setTiempo] = useState(0);
   const [juegoReiniciado, setJuegoReiniciado] = useState(false);
+  const temporizador = document.getElementById("timer");
 
   useEffect(() => {
+    if (tiempo >= 100) {
+      temporizador.classList.add("smallText");
+    }
+
     let vTiempo;
     if (juegoEmpezado) {
-      vTiempo = setInterval(() => setTiempo((tiempoAnterior) => tiempoAnterior + 1), 1000);
+      vTiempo = setInterval(() => setTiempo((tiempo) => tiempo + 1), 1000);
     }
     return () => {
       clearInterval(vTiempo);
     };
-  }, [juegoEmpezado]);
+  }, [juegoEmpezado, tiempo]);
 
   const celdas = mapaValores.map((fila, filaIndex) =>
     fila.map((item, colIndex) => (
@@ -42,6 +47,7 @@ function App() {
   function btnComenzar() {
     setNumeroMinasTexto("10");
     setTiempo(0);
+    temporizador.classList.remove("smallText");
     setJuegoEmpezado(true);
 
     let mapa = Array(8)
@@ -104,13 +110,18 @@ function App() {
   }
 
   const mostrarValor = (filaIndex, colIndex) => {
-    const copiaValores = mapaValores.map((fila, fIndex) =>
-      fIndex === filaIndex
-        ? fila.map((valor, cIndex) =>
-            cIndex === colIndex ? copiaMapaValores[filaIndex][colIndex] : valor
-          )
-        : fila
-    );
+    const copiaValores = mapaValores.map((fila, fIndex) => {
+      if (fIndex === filaIndex) {
+        return fila.map((valor, cIndex) => {
+          if (cIndex === colIndex) {
+            return copiaMapaValores[filaIndex][colIndex];
+          }
+          return valor;
+        });
+      }
+      return fila;
+    });
+    
     setMapaValores(copiaValores);
   };
 
@@ -122,7 +133,7 @@ function App() {
             <div className="d-flex flex-wrap justify-content-around">
               <div
                 id="numeroMinas"
-                className="lcdText text-danger pe-2 m-2 borderInsideS"
+                className="lcdText borderInsideS"
               >
                 {numeroMinasTexto}
               </div>
@@ -134,8 +145,8 @@ function App() {
                 />
               </div>
               <div
-                className="lcdText text-danger pe-2 m-2 borderInsideS"
-                style={{ width: 54 }}
+                className="lcdText borderInsideS"
+                id="timer"
               >
                 {tiempo}
               </div>
