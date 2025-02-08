@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./App.css"; 
 import Celda from "./components/Celda";
-
+import acierto from "./assets/images/acierto.png"
 // Importacion de iconos 
 import { LuPartyPopper } from "react-icons/lu";
 import { GiPartyFlags } from "react-icons/gi";
@@ -325,7 +325,7 @@ for (let fila = 0; fila < 8; fila++) {
               </div>
               <div className="align-self-center m-2 borderInsideS">
                 <img
-                  src="./src/assets/images/acierto.png"
+                  src={acierto}
                   style={{ width: 50 }}
                   alt="icon"
                 />
